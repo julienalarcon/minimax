@@ -19,14 +19,26 @@ while True:
 
 
 print("")
+
 print("#########################")
-print("Game is finished")
+print("Game finished, results ")
+print("#########################")
+
 printBoard(board)
-if result == 0:
+
+winner = getWinner(board)
+
+print("")
+
+if winner == "TIE":
     print("It's a tie !")
-elif (result == 1 and myPlayer == "X") or (result == -1 and myPlayer == "O"):
+elif winner == myPlayer:
     print("You win !!")
 else:
     print("You loose....")
 
+print("")
+
+print("#########################")
+print("End ")
 print("#########################")

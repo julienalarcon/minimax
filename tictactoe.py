@@ -1,6 +1,17 @@
 import copy
 
-# Constants
+# Constants / Conf
+PLAYERS = {
+    "X": {
+        "goal": "maximize",
+        "nextPlayer": "O"
+    },
+
+    "O": {
+        "goal": "minimize",
+        "nextPlayer": "X"
+    },
+}
 EMPTY_CELL = "_"
 
 # Variables
@@ -18,17 +29,16 @@ def newGame():
 # Choose which player I am
 def choosePlayer():
     while True:
-        print("Choose your player (X / O):")
+        print(f"Choose your player ({' / '.join(p for p in PLAYERS)}):")
+
         myPlayer = input()
-        if(not myPlayer in ["X", "O"]):
-            print("Wrong input, enter O or X")
+
+        if(not myPlayer in PLAYERS):
+            print(f"ERROR, Wrong input, enter {' or '.join(p for p in PLAYERS)}")
         else:
             break
 
-    if myPlayer == "X":
-        computer = "O"
-    else:
-        computer = "X"
+    computer = PLAYERS[myPlayer]["nextPlayer"]
 
     return myPlayer, computer
 
@@ -41,10 +51,10 @@ def gameTurn(myPlayer, computer, board):
     moves = [i for i, val in enumerate(board) if val == EMPTY_CELL]
     winnerScore = getWinnerScore(board)
 
-    if winnerScore:
+    if winnerScore: # If we have a winner, we return it
         return winnerScore
 
-    if not moves:
+    if not moves: # If game is a tie
         return 0
 
     # Else we play
@@ -53,20 +63,24 @@ def gameTurn(myPlayer, computer, board):
     printBoard(board)
 
     if myPlayer == currentPlayer: # my turn
+
         while True:
-            print("Enter coordinates for your next point (x,y)")
+            print("")
+            print("Enter coordinates for your next point (form x,y)")
+
             try:
                 myCoordinates = input()
                 myX, myY = int(myCoordinates.split(",")[0]),int(myCoordinates.split(",")[1])
                 myPoint = myY*boardLineSize + myX
 
                 if board[myPoint] != EMPTY_CELL:
-                    print("Point " + myCoordinates + " is already taken !!")
+                    print(f"ERROR, Point {myCoordinates} is already taken !")
                     continue
 
                 break
+
             except ValueError:
-                print("Enter valid coordinates x,y !!")
+                print("ERROR, Enter valid coordinates x,y !!")
                 continue
 
         board[myPoint] = myPlayer
@@ -74,9 +88,10 @@ def gameTurn(myPlayer, computer, board):
     else: # Computer's turn
         print("")
         print("Computer plays...")
+        print("")
         bestMove = -1
 
-        if computer == "X":
+        if PLAYERS[computer]["goal"] == "maximize":
             bestScore = -100
         else:
             bestScore = 100
@@ -86,7 +101,7 @@ def gameTurn(myPlayer, computer, board):
             boardCopy[move] = computer
             score = minimax(boardCopy, myPlayer)
             #print(f"Score for {move} is {score}")
-            if computer == "X":
+            if PLAYERS[computer]["goal"] == "maximize":
                 if score > bestScore:
                     bestMove = move
                     bestScore = score
@@ -97,10 +112,8 @@ def gameTurn(myPlayer, computer, board):
 
         board[bestMove] = computer
 
-    if currentPlayer == "X":
-        currentPlayer = "O"
-    else:
-        currentPlayer = "X"
+    # Switch currentPlayer
+    currentPlayer = PLAYERS[currentPlayer]["nextPlayer"]
 
     return None
 
@@ -117,18 +130,18 @@ def minimax(board, player):
     if not moves: # If game over (no moves) its a tie
         return 0
 
-    if player == "X": # Try to maximize
+    if PLAYERS[player]["goal"] == "maximize": # Try to maximize
         score = -100
         for move in moves:
             boardCopy = copy.copy(board)
-            boardCopy[move] = "X"
-            score = max(score, minimax(boardCopy, "O"))
+            boardCopy[move] = player
+            score = max(score, minimax(boardCopy, PLAYERS[player]["nextPlayer"]))
     else: # try to minimize
         score = 100
         for move in moves:
             boardCopy = copy.copy(board)
-            boardCopy[move] = "O"
-            score = min(score, minimax(boardCopy, "X"))
+            boardCopy[move] = player
+            score = min(score, minimax(boardCopy, PLAYERS[player]["nextPlayer"]))
 
     return score
 
@@ -151,6 +164,7 @@ def printBoard(board):
             print(board[(i*boardLineSize)+j], end=" ")
 
         print("")
+
 
 # Check if any winning position
 def getWinnerScore(board):
@@ -183,6 +197,25 @@ def getWinnerScore(board):
     else:
         return 0
 
+
+# Get the board winner
+def getWinner(board):
+    res = getWinnerScore(board)
+
+    if res == 1:
+        for p in PLAYERS:
+            if PLAYERS[p]["goal"] == "maximize":
+                return p
+
+    if res == -1:
+        for p in PLAYERS:
+            if PLAYERS[p]["goal"] == "minimize":
+                return p
+
+    return "TIE"
+
+
+# Set the size of a line of the board
 def setBoardLineSize(newSize):
     global boardLineSize
     boardLineSize = newSize
